@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>8Bitcat Laboratory - CHIP-8 EMULATOR</title>
+		<link rel="stylesheet" type="text/css" href="css/8bitcat.css">
+		<script src="javachippet.js"></script>
+	</head>
+	
+	<script>
+//GLOBAL STUFF
+
+window.onload = function()
+{
+
+var chip8EmulatorCore =  new chip8Core();
+var selecten = document.getElementById('romselector');
+
+var runbtn = document.getElementById('run');
+var stopbtn = document.getElementById('stop');
+var debugbtn = document.getElementById('debug');
+var ministopbtn = document.getElementById('ministop');
+
+runbtn.onclick = function ()
+{
+	stopChip8();
+	runChip8();
+}
+debugbtn.onclick = function ()
+{
+	toggleDebug();
+	
+}
+ministopbtn.onclick = function ()
+{
+	miniStopChip8();
+	
+}
+
+
+stopbtn.onclick = function ()
+{
+	stopChip8();
+}
+selecten.onchange = function ()
+{
+	stopChip8();
+	runChip8(this.value);
+	document.getElementById("drawingscreen").focus();
+};
+
+function runChip8(theROOM)
+{
+	var buttonStop = document.getElementById('stop');	
+	buttonStop.disabled = false;
+	var buttonRun = document.getElementById('run');	
+	buttonRun.disabled = true;
+	chip8EmulatorCore =  new chip8Core();
+	//chip8EmulatorCore =  new chip8Core();
+	var width = chip8EmulatorCore.getWidth();
+	var height = chip8EmulatorCore.getHeight();
+	var htmlRenderer = new HtmlRenderer("drawingscreen",width,height,8);
+	chip8EmulatorCore.setDrawingArea(htmlRenderer);
+	addKeyPressEventsListeners();
+	//var romToGet = "space.bin"
+	
+	if(theROOM != null || theROOM != 'undefined')
+	{
+		var selecten = document.getElementById('romselector');
+		var romToGet = selecten.value;
+	}
+	else
+	{
+			var romToGet = theROOM;
+	}
+	
+
+	
+	//--> Fetch Roms
+
+	
+			xhr = new XMLHttpRequest();
+			xhr.open("GET", "roms/" + romToGet, true);
+			xhr.responseType = "arraybuffer";
+			
+			//For binary data don't user RESPONSETEXT, just use RESPONSE
+			
+			xhr.onload = function ()
+			{
+				
+				chip8EmulatorCore.reset();
+				var korven = xhr.response;
+				chip8EmulatorCore.loadRomIntoMem(new Uint8Array(xhr.response));
+				chip8EmulatorCore.start();
+				
+			}
+
+			xhr.send();
+
+		
+};
+
+function addKeyPressEventsListeners()
+{
+	document.addEventListener("keydown", function(event) {	
+		chip8EmulatorCore.setKey(event.keyCode);	
+	});
+	
+	document.addEventListener("keyup", function(event) {
+		chip8EmulatorCore.unSetKey(event.keyCode);
+	});
+
+	var buttons = document.getElementsByClassName("controls");
+	
+	for (var i =0; i < buttons.length; i++)
+	{
+		buttons[i].addEventListener("onmousedown", function(event)
+		{
+				alert(event.id);
+		});
+	}
+	
+
+
+};
+
+
+
+function stopChip8()
+{
+	chip8EmulatorCore.stop();
+}
+function miniStopChip8()
+{
+	chip8EmulatorCore.ministop();
+}
+function toggleDebug()
+{
+	if(!chip8EmulatorCore.debugOnline)
+	{
+		chip8EmulatorCore.debugOnline = true;
+	}
+	else
+	{	
+		chip8EmulatorCore.debugOnline = false;
+	}	
+}
+function mouseDown(event)
+{
+	switch(event.id)
+	{
+	   case "left":
+			chip8EmulatorCore.setKey(65);	
+	   break;
+	   case "fire":
+			chip8EmulatorCore.setKey(87);	
+	   break;
+	   case "right":
+			chip8EmulatorCore.setKey(68);	
+	   break;
+	
+	}
+	
+
+}
+function mouseUp(event)
+{
+	switch(event.id)
+	{
+	   case "left":
+			chip8EmulatorCore.unSetKey(65);
+	   break;
+	   case "fire":
+			chip8EmulatorCore.unSetKey(83);
+	   break;
+	   case "right":
+			chip8EmulatorCore.unSetKey(68);
+	   break;
+	
+	}
+	
+	
+}
+
+
+}
+</script>
+	
+	
+	<body>
+		<div id="wrapper">
+			<div id="header">
+				<h1>CHIP- 8 EMULATOR</h1>
+			</div>	
+			<div id="page">			
+				<div id="sidebarleft">
+					
+					
+				</div>
+				<div id="content">
+					<canvas id="drawingscreen" width="512" height="256" style="background:#FFFFFF;">
+					</canvas>
+					<select id="romselector">
+					
+						<option value="BRIX.bin">BRIX</option>
+						<option value="IBM.bin">IBM RENDER TEST</option>
+						<option value="INVADERS.bin">INVADERS</option>
+						<option value="TETRIS.bin">TETRIS</option>
+						<option value="UFO.bin">UFO</option>
+						<option value="WIPEOFF.bin">WIPEOFF (Hardest Game Ever)!</option>
+					</select>
+					
+					<input id="run" type="button" value="Run!">
+					<input id="stop" type="button" disabled="true" value="stop!">
+					<input id="ministop" type="button" disabled="true" value="Stop and save debug(disabled)!">
+					 <input id="debug" type="button" disabled="true" value="toggle debug(disabled)!">
+				
+					<div>Program Counter: <div id="cycle" width="200px" >0
+					</div>
+					</div>
+					<div id="controls" widht="200px">
+					<!--
+					<input class="controls" id="left" type="button"  value="LEFT" onmousedown="mouseDown(this)" onmouseup="mouseUp(this)">
+					<input class="controls" id="fire" type="button" value="FIRE" onmousedown="mouseDown(this)" onmouseup="mouseUp(this)">
+					<input class="controls" id="right" type="button" value="RIGHT" onmousedown="mouseDown(this)" onmouseup="mouseUp(this)">
+					-->
+					</div>
+					<div id="debug" width="200px" >
+					</div>
+					<div width="400px">
+					Keybord Controls
+					<br>
+					A = Left
+					<br>
+					S = Right
+					<br>
+					W = Fire (When needed)!
+					</div>
+				</div>	
+			</div>	
+		</div>
+	</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
